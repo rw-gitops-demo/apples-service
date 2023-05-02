@@ -1,0 +1,61 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - main
+
+env:
+  SERVICE_NAME: apples-service
+  APP_MANIFESTS_REPO: rw-gitops-demo/app-manifests
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}
+  TAG_NAME: 1.0.${{ github.run_number }}
+
+jobs:
+  create-release:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      packages: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Create tag
+        run: |
+          git tag ${{ env.TAG_NAME }}
+          git push origin ${{ env.TAG_NAME }}
+
+      - name: Create release
+        uses: ./.github/templates/create-release
+        if: ${{ github.run_number != 1 }}
+        with:
+          token: ${{ github.token }}
+          tag-name: ${{ env.TAG_NAME }}
+
+      - name: Log in to the Container registry
+        uses: docker/login-action@v2
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v4
+        with:
+          context: .
+          push: true
+          tags: |
+            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ env.TAG_NAME }}
+            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest
+
+      - name: Trigger CD workflow
+        uses: benc-uk/workflow-dispatch@v1
+        with:
+          workflow: cd.yml
+          repo: ${{ env.APP_MANIFESTS_REPO }}
+          ref: main
+          inputs: '{ "registry": "${{ env.REGISTRY }}", "service-name": "${{ env.SERVICE_NAME }}", "image-name": "${{ env.IMAGE_NAME }}", "tag-name": "${{ env.TAG_NAME }}" }'
+          token: "${{ secrets.DEPLOY_PAT }}"

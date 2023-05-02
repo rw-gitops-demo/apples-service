@@ -1,0 +1,28 @@
+name: create-release
+description: The steps to create a release with a CHANGELOG from conventional commits
+
+inputs:
+  token:
+    description: The GitHub token to read previous tags
+    required: true
+  tag-name:
+    description: The git tag name
+    required: true
+
+runs:
+  using: composite
+
+  steps:
+    - name: Create CHANGELOG
+      id: changelog
+      uses: requarks/changelog-action@v1
+      with:
+        token: ${{ inputs.token }}
+        tag: ${{ inputs.tag-name }}
+
+    - name: Create release
+      uses: ncipollo/release-action@v1
+      with:
+        body: ${{ steps.changelog.outputs.changes }}
+        tag: ${{ inputs.tag-name }}
+        makeLatest: true
