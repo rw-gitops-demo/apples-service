@@ -13,7 +13,7 @@ The purpose of this repository is to provide an example microservice to be deplo
 
 ## CI GitHub action
 
-There is a single `CI` GitHub action that runs on every push to `main`. The action performs the following steps:
+There is a single `CI` GitHub action workflow that runs on every push to `main`. The action performs the following steps:
 - it tags the commit with the action run number;
 - it creates a release with a CHANGELOG derived from the commit messages since the previous tag;
 - it builds a docker image and pushes this to a GitHub registry; and finally
@@ -22,3 +22,10 @@ There is a single `CI` GitHub action that runs on every push to `main`. The acti
 The `CD` action in the [app-manifests](https://github.com/rw-gitops-demo/app-manifests) will update the image name for the `apples-service` manifest to the newly built image and commit the change to that repository. Argo CD monitors the repository for changes, detects that the cluster is out-of-sync with the repo, and then rolls out the new version of the service.
 
 Note that in order for the `CI` action to trigger the `CD` action in the [app-manifests](https://github.com/rw-gitops-demo/app-manifests) repository, it has been configured with a `DEPLOY_PAT` secret that has Read and Write access to actions for [app-manifests](https://github.com/rw-gitops-demo/app-manifests).
+
+## Setting up the demo
+
+With the cluster running and Argo CD monitoring the repos, make a commit to this repo and push it.
+The workflow will build and push a Docker image to a GitHub packages registry.
+By default, this registry is private, so go to the package settings to change the visibility to public.
+This first requires enabling the option to allow organisation members to create public packages in the organisation settings.
