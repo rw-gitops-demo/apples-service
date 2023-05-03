@@ -3,7 +3,7 @@ const app = express()
 const port = 3000
 
 app.get('/', (req, res) => {
-  res.send(`Apples are ${process.env.COLOUR || 'blue'} and juicy!`)
+  res.send(`Apples are ${process.env.COLOUR || 'blue'}.`)
 })
 
 app.listen(port, () => {
